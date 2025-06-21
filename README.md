@@ -14,6 +14,8 @@ TODO
 - Add Support and detection for ANIM, or at least partially
 - Add Support and detection for custom offsets
 - Add Support for PSM files (Custom [PCK Studio](https://github.com/PhoenixARC/-PCK-Studio) Skin Model format)
+- Add Support for CSM and PSM to JSON
+- Maybe direct Blockbench support?
 
 **Special Thanks**
 - Niels Lohmann for their amazing [JSON library]([docs/CONTRIBUTING.md](https://github.com/nlohmann/json)).

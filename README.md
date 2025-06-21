@@ -13,6 +13,11 @@ TODO
 ----
 - Add Support and detection for ANIM, or at least partially
 - Add Support and detection for custom offsets
+- Add Support for PSM files (Custom [PCK Studio](https://github.com/PhoenixARC/-PCK-Studio) Skin Model format)
 
 **Special Thanks**
 - Niels Lohmann for their amazing [JSON library]([docs/CONTRIBUTING.md](https://github.com/nlohmann/json)).
+- PhoenixARC for being a wonderful friend and developing one of the many JSON2CSM converters out there, of which this took a lot of inspiration
+- NessieHax/Miku-666 for being a wonderful friend and for developing numerous skin related features with me for PCK Studio. This program would likely not exist without them.
+- EternalModz for being a wonderful friend
+- and viewers like YOU! Thank you!

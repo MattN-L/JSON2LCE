@@ -1,4 +1,5 @@
 #include "Converter.h"
+#include <exception>
 
 using json = nlohmann::json;
 
@@ -138,7 +139,7 @@ std::string GetLCEBoneName(const std::string& boneName)
     return "NULL";
 }
 
-void JSON2CSM(const std::wstring& inpath, const std::wstring& outpath)
+void JSON2CSM(HWND& hWnd, const std::wstring& inpath, const std::wstring& outpath)
 {
     std::ifstream file(inpath);
     if (!file) {
@@ -183,22 +184,20 @@ void JSON2CSM(const std::wstring& inpath, const std::wstring& outpath)
 
     std::cout << rootName << std::endl;
 
-    if (!legacyFormat)
-    {
-        for (const auto& geo : rootArray)
+    try {
+        if (legacyFormat)
         {
-            auto identifier = geo["description"]["identifier"].get<std::string>();
-            int texWidth = geo["description"]["texture_width"].get<int>();
-            int texHeight = geo["description"]["texture_height"].get<int>();
+            std::string identifier = rootName;
+            const auto& model = rootArray;
 
-            std::cout << "Model: " << identifier << " (" << texWidth << "x" << texHeight << ")\n";
+            int texWidth = model["texturewidth"].get<int>();
+            int texHeight = model["textureheight"].get<int>();
 
-            if (geo.contains("bones"))
+            if (model.contains("bones"))
             {
-                for (const auto& bone : geo["bones"])
+                for (const auto& bone : model["bones"])
                 {
                     std::string boneName = bone["name"].get<std::string>();
-                    std::cout << " Bone: " << boneName << std::endl;
 
                     if (bone.contains("cubes")) {
                         for (const auto& cube : bone["cubes"]) {
@@ -227,7 +226,7 @@ void JSON2CSM(const std::wstring& inpath, const std::wstring& outpath)
 
                             ofile.write(ss.str().c_str(), ss.str().size());
 
-                            std::cout << "  Cube Origin: [" << origin[0] << ", " << origin[1] << ", " << origin[2] << "]\n";
+                            std::cout << "  Cube Origin: [" << PosX << ", " << PosY << ", " << PosZ << "]\n";
                             std::cout << "  Cube Size: [" << size[0] << ", " << size[1] << ", " << size[2] << "]\n";
                             std::cout << "  UV: [" << uv[0] << ", " << uv[1] << "]\n";
 
@@ -240,52 +239,73 @@ void JSON2CSM(const std::wstring& inpath, const std::wstring& outpath)
                 }
             }
         }
-    }
-    else
-    {
-        std::string identifier = rootName;
-        const auto& model = rootArray;
-
-        int texWidth = model["texturewidth"].get<int>();
-        int texHeight = model["textureheight"].get<int>();
-
-        std::cout << "Model: " << identifier << " (" << texWidth << "x" << texHeight << ")\n";
-
-        if (model.contains("bones"))
+        else
         {
-            for (const auto& bone : model["bones"])
+            for (const auto& geo : rootArray)
             {
-                std::string boneName = bone["name"].get<std::string>();
-                std::cout << " Bone: " << boneName << std::endl;
+                auto identifier = geo["description"]["identifier"].get<std::string>();
+                int texWidth = geo["description"]["texture_width"].get<int>();
+                int texHeight = geo["description"]["texture_height"].get<int>();
 
-                if (bone.contains("cubes")) {
-                    for (const auto& cube : bone["cubes"]) {
-                        std::string finalBoneName = GetLCEBoneName(boneName);
+                std::cout << "Model: " << identifier << " (" << texWidth << "x" << texHeight << ")\n";
 
-                        auto origin = cube["origin"];
-                        auto size = cube["size"];
-                        auto uv = cube["uv"];
-                        bool isMirrored = cube.contains("mirror") && cube["mirror"].get<bool>();
-                        float scale = cube.contains("inflate") ? cube["inflate"].get<float>() : 0.0f;
+                if (geo.contains("bones"))
+                {
+                    for (const auto& bone : geo["bones"])
+                    {
+                        std::string boneName = bone["name"].get<std::string>();
+                        std::cout << " Bone: " << boneName << std::endl;
 
-                        std::cout << "  Cube Origin: [" << origin[0] << ", " << origin[1] << ", " << origin[2] << "]\n";
-                        std::cout << "  Cube Size: [" << size[0] << ", " << size[1] << ", " << size[2] << "]\n";
-                        std::cout << "  UV: [" << uv[0] << ", " << uv[1] << "]\n";
+                        if (bone.contains("cubes")) {
+                            for (const auto& cube : bone["cubes"]) {
+                                std::string finalBoneName = GetLCEBoneName(boneName);
 
-                        std::stringstream ss;
-                        ss << "BOX " << finalBoneName << " " << origin[0] << " " << origin[1] << " " << origin[2] << " " << size[0] << " " << size[1] << " " << size[2] << " " << uv[0] << " " << uv[1] << " 0 " << isMirrored << " " << scale << "\n";
+                                GetLCEBoneOffsets(finalBoneName);
 
-                        ofile.write(ss.str().c_str(), ss.str().size());
+                                if (finalBoneName == "NULL")
+                                {
+                                    std::cerr << "INVALID BONE, SKIPPED\n";
+                                    continue;
+                                }
 
-                        if (cube.contains("mirror"))
-                            std::cout << "  Mirrored: " << isMirrored << "\n";
-                        if (cube.contains("inflate"))
-                            std::cout << "  Inflate: " << scale << "\n";
+                                auto origin = cube["origin"];
+                                auto size = cube["size"];
+                                auto uv = cube["uv"];
+                                bool isMirrored = cube.contains("mirror") && cube["mirror"].get<bool>();
+                                float scale = cube.contains("inflate") ? cube["inflate"].get<float>() : 0.0f;
+
+                                float PosX = origin[0] + posXOffset;
+                                float PosY = -1 * (origin[1] - posYOffset + size[1]);
+                                float PosZ = origin[2] + posZOffset;
+
+                                std::stringstream ss;
+                                ss << "BOX " << finalBoneName << " " << PosX << " " << PosY << " " << PosZ << " " << size[0] << " " << size[1] << " " << size[2] << " " << uv[0] << " " << uv[1] << " " << isHelmet << " " << isMirrored << " " << scale << "\n";
+
+                                ofile.write(ss.str().c_str(), ss.str().size());
+
+                                std::cout << "  Cube Origin: [" << PosX << ", " << PosY << ", " << PosZ << "]\n";
+                                std::cout << "  Cube Size: [" << size[0] << ", " << size[1] << ", " << size[2] << "]\n";
+                                std::cout << "  UV: [" << uv[0] << ", " << uv[1] << "]\n";
+
+                                if (cube.contains("mirror"))
+                                    std::cout << "  Mirrored: " << isMirrored << "\n";
+                                if (cube.contains("inflate"))
+                                    std::cout << "  Inflate: " << scale << "\n";
+                            }
+                        }
                     }
                 }
             }
         }
     }
+    catch (const std::exception& e) {
+        // handle standard exceptions
+        std::cerr << "Exception: " << e.what() << std::endl;
+        MessageBox(hWnd, L"Something went wrong. Please ensure that the model is a valid Bedrock Entity model JSON.", L"Error. Operation Aborted.", MB_ICONERROR);
+        return;
+    }
+
+    MessageBox(hWnd, L"Geometry successfully converted!", L"Done!", MB_ICONINFORMATION);
 
     ofile.close();
 }

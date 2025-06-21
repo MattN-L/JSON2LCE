@@ -25,6 +25,7 @@ INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 HBRUSH MayBrush = CreateSolidBrush(RGB(0xA0, 0x4D, 0xFF));
 HBRUSH StarBrush = CreateSolidBrush(RGB(0xc7, 0x9e, 0xf0));
 HPEN StarPen = CreatePen(PS_SOLID, 4, RGB(0xc7, 0x9e, 0xf0));
+HFONT MayFont = CreateFont(24, 0, 0, 0, FW_DEMIBOLD, 0, 0, 0, ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, L"lato");
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 					 _In_opt_ HINSTANCE hPrevInstance,
@@ -152,7 +153,7 @@ bool OpenJSONFileDialog(HWND hWnd, std::wstring& path)
 	else return false;
 }
 
-bool SaveFileDialog(HWND hWnd, std::wstring& path, const std::wstring& filter, const std::wstring& ext)
+bool SaveJSONFileDialog(HWND hWnd, std::wstring& path)
 {
 	OPENFILENAME ofn;       // common dialog box structure
 	WCHAR szFile[MAX_PATH] = {}; // buffer for file name
@@ -163,12 +164,10 @@ bool SaveFileDialog(HWND hWnd, std::wstring& path, const std::wstring& filter, c
 	ofn.hwndOwner = hWnd;
 	ofn.lpstrFile = szFile;
 	ofn.nMaxFile = sizeof(szFile) / sizeof(szFile[0]);
-	std::vector<wchar_t> filterBuffer(filter.begin(), filter.end());
-	filterBuffer.push_back(L'\0');
-	ofn.lpstrFilter = filterBuffer.data(); // this is such a stupid solution lol
+	ofn.lpstrFilter = L"CSM Files\0*.csm\0All Files\0*.*\0";
 	ofn.nFilterIndex = 1;
 	ofn.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
-	ofn.lpstrDefExt = ext.c_str();
+	ofn.lpstrDefExt = L"csm";
 
 	if (GetSaveFileName(&ofn) == TRUE)
 	{
@@ -255,7 +254,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				L".JSON -> .CSM",      // Button text
 				WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON, // Styles 
 				(WIDTH - 200) / 2,         // x position 
-				40,         // y position 
+				200,         // y position 
 				200,        // Button width
 				100,        // Button height
 				hWnd,     // Parent window
@@ -276,13 +275,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			{
 			case 5: // because
 				if (!OpenJSONFileDialog(hWnd, jsonPath) ||
-					!SaveFileDialog(hWnd, outPath, L"CSM Files\0*.csm\0All Files\0*.*\0", L"csm"))
+					!SaveJSONFileDialog(hWnd, outPath))
 				{
 					MessageBox(hWnd, L"Operation aborted", L"Aborted", MB_ICONERROR);
 					break;
 				}
 				std::wcout << jsonPath << " " << outPath << std::endl;
-				JSON2CSM(jsonPath, outPath);
+				JSON2CSM(hWnd, jsonPath, outPath);
 				break;
 			default:
 				return DefWindowProc(hWnd, message, wParam, lParam);
@@ -312,35 +311,62 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		}
 	break;
 	case WM_PAINT:
-		{
-			PAINTSTRUCT ps;
-			HDC hdc = BeginPaint(hWnd, &ps);
+	{
+		// was this complicated painting code really necessary? Yes. Yes it was. Style is important. <3
 
-			HDC memDC = CreateCompatibleDC(hdc);
-			RECT rc;
-			GetClientRect(hWnd, &rc);
-			HBITMAP memBitmap = CreateCompatibleBitmap(hdc, rc.right - rc.left, rc.bottom - rc.top);
-			HBITMAP oldBitmap = (HBITMAP)SelectObject(memDC, memBitmap);
+		PAINTSTRUCT ps;
+		HDC hdc = BeginPaint(hWnd, &ps);
 
-			FillRect(memDC, &rc, MayBrush);
-			HBRUSH oldBrush = (HBRUSH)SelectObject(memDC, StarBrush);
+		RECT rc;
+		GetClientRect(hWnd, &rc);
+		int width = rc.right - rc.left;
+		int height = rc.bottom - rc.top;
 
-			SelectObject(memDC, StarPen);
+		HDC memDC = CreateCompatibleDC(hdc);
+		HBITMAP memBitmap = CreateCompatibleBitmap(hdc, width, height);
+		HBITMAP oldBitmap = (HBITMAP)SelectObject(memDC, memBitmap);
 
-			for (int i = 0; i < stars.size(); ++i) {
-				CreateStarPoints(stars[i].x, stars[i].y, STAR_SIZE, stars[i].angle);
-				Polygon(memDC, starPoints, 10);
-			}
+		// Fill background
+		FillRect(memDC, &rc, MayBrush);
 
-			BitBlt(hdc, 0, 0, rc.right - rc.left, rc.bottom - rc.top, memDC, 0, 0, SRCCOPY);
+		// Draw stars
+		HBRUSH oldBrush = (HBRUSH)SelectObject(memDC, StarBrush);
+		SelectObject(memDC, StarPen);
 
-			SelectObject(memDC, oldBitmap);
-			DeleteObject(memBitmap);
-			DeleteDC(memDC);
-
-			EndPaint(hWnd, &ps);
+		for (int i = 0; i < stars.size(); ++i) {
+			CreateStarPoints(stars[i].x, stars[i].y, STAR_SIZE, stars[i].angle);
+			Polygon(memDC, starPoints, 10);
 		}
-		break;
+
+		// Draw Copyright Text
+		HFONT oldFont = (HFONT)SelectObject(memDC, MayFont);
+		SetTextColor(memDC, RGB(255, 255, 255));
+		SetBkMode(memDC, TRANSPARENT);
+		SIZE textSize;
+
+		static const wchar_t* COPYRIGHT = L"MattNL (c) 2025";
+		static const wchar_t* VERSION = L"Version 1.0";
+
+		GetTextExtentPoint32W(memDC, COPYRIGHT, 15, &textSize);
+
+		int x = WIDTH - (textSize.cx + 20);  // 24px is the font size
+		int y = HEIGHT - (textSize.cy + 36);
+
+		TextOutW(memDC, x, y, COPYRIGHT, 15);
+		TextOutW(memDC, 0, y, VERSION, 11);
+
+		// Blit final image to screen
+		BitBlt(hdc, 0, 0, width, height, memDC, 0, 0, SRCCOPY);
+
+		// Clean up
+		SelectObject(memDC, oldBitmap);
+		SelectObject(memDC, oldFont);
+		DeleteObject(memBitmap);
+		DeleteDC(memDC);
+
+		EndPaint(hWnd, &ps);
+	}
+	break;
 	case WM_DESTROY:
 		KillTimer(hWnd, 1);
 		PostQuitMessage(0);

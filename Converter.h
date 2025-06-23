@@ -1,11 +1,10 @@
 #pragma once
 
-#include <Windows.h>
 #include <fstream>
 #include <iostream>
 #include <unordered_set>
 #include <nlohmann/json.hpp>
+#include <SDL3/SDL.h>
+#include "IO.h"
 
-void JSON2CSM(HWND& hWnd, const std::wstring& inpath, const std::wstring& outpath);
-
-void JSON2PSM(const std::wstring& inpath, const std::wstring& outpath);
+bool JSON2CSM(SDL_Window& window, const std::string& inpath);

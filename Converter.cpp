@@ -139,12 +139,12 @@ std::string GetLCEBoneName(const std::string& boneName)
     return "NULL";
 }
 
-void JSON2CSM(HWND& hWnd, const std::wstring& inpath, const std::wstring& outpath)
+bool JSON2CSM(SDL_Window& window, const std::string& inpath)
 {
     std::ifstream file(inpath);
     if (!file) {
-        std::wcerr << L"Failed to open file: " << inpath << std::endl;
-        return;
+        std::cerr << "Failed to open file: " << inpath << std::endl;
+        return false;
     }
 
     json root;
@@ -153,7 +153,7 @@ void JSON2CSM(HWND& hWnd, const std::wstring& inpath, const std::wstring& outpat
     }
     catch (const std::exception& e) {
         std::cerr << "Failed to parse JSON: " << e.what() << std::endl;
-        return;
+        return false;
     }
 
     file.close();
@@ -176,11 +176,7 @@ void JSON2CSM(HWND& hWnd, const std::wstring& inpath, const std::wstring& outpat
         }
     }
 
-    std::ofstream ofile(outpath);
-    if (!ofile) {
-        std::wcerr << L"Failed to save file: " << outpath << std::endl;
-        return;
-    }
+    std::stringstream* fileData = new std::stringstream();
 
     std::cout << rootName << std::endl;
 
@@ -221,10 +217,7 @@ void JSON2CSM(HWND& hWnd, const std::wstring& inpath, const std::wstring& outpat
                             float PosY = -1 * (origin[1] - posYOffset + size[1]);
                             float PosZ = origin[2] + posZOffset;
 
-                            std::stringstream ss;
-                            ss << "BOX " << finalBoneName << " " << PosX << " " << PosY << " " << PosZ << " " << size[0] << " " << size[1] << " " << size[2] << " " << uv[0] << " " << uv[1] << " " << isHelmet << " " << isMirrored << " " << scale << "\n";
-
-                            ofile.write(ss.str().c_str(), ss.str().size());
+                            *fileData << "BOX " << finalBoneName << " " << PosX << " " << PosY << " " << PosZ << " " << size[0] << " " << size[1] << " " << size[2] << " " << uv[0] << " " << uv[1] << " " << isHelmet << " " << isMirrored << " " << scale << "\n";
 
                             std::cout << "  Cube Origin: [" << PosX << ", " << PosY << ", " << PosZ << "]\n";
                             std::cout << "  Cube Size: [" << size[0] << ", " << size[1] << ", " << size[2] << "]\n";
@@ -278,10 +271,7 @@ void JSON2CSM(HWND& hWnd, const std::wstring& inpath, const std::wstring& outpat
                                 float PosY = -1 * (origin[1] - posYOffset + size[1]);
                                 float PosZ = origin[2] + posZOffset;
 
-                                std::stringstream ss;
-                                ss << "BOX " << finalBoneName << " " << PosX << " " << PosY << " " << PosZ << " " << size[0] << " " << size[1] << " " << size[2] << " " << uv[0] << " " << uv[1] << " " << isHelmet << " " << isMirrored << " " << scale << "\n";
-
-                                ofile.write(ss.str().c_str(), ss.str().size());
+                                *fileData << "BOX " << finalBoneName << " " << PosX << " " << PosY << " " << PosZ << " " << size[0] << " " << size[1] << " " << size[2] << " " << uv[0] << " " << uv[1] << " " << isHelmet << " " << isMirrored << " " << scale << "\n";
 
                                 std::cout << "  Cube Origin: [" << PosX << ", " << PosY << ", " << PosZ << "]\n";
                                 std::cout << "  Cube Size: [" << size[0] << ", " << size[1] << ", " << size[2] << "]\n";
@@ -301,11 +291,11 @@ void JSON2CSM(HWND& hWnd, const std::wstring& inpath, const std::wstring& outpat
     catch (const std::exception& e) {
         // handle standard exceptions
         std::cerr << "Exception: " << e.what() << std::endl;
-        MessageBox(hWnd, L"Something went wrong. Please ensure that the model is a valid Bedrock Entity model JSON.", L"Error. Operation Aborted.", MB_ICONERROR);
-        return;
+        //MessageBox(hWnd, L"Something went wrong. Please ensure that the model is a valid Bedrock Entity model JSON.", L"Error. Operation Aborted.", MB_ICONERROR);
+        return false;
     }
 
-    MessageBox(hWnd, L"Geometry successfully converted!", L"Done!", MB_ICONINFORMATION);
+    csmSaveFile(&window, fileData);
 
-    ofile.close();
+    return true;
 }

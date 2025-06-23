@@ -1,7 +1,7 @@
 ﻿cmake_minimum_required(VERSION 3.8)
 project(JSON2LCE)
 
-add_executable(JSON2LCE JSON2LCE.cpp)
+add_executable(JSON2LCE "JSON2LCE.cpp" "Button.cpp" "Star.cpp" "IO.cpp" "Converter.cpp")
 
 target_include_directories(JSON2LCE PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}/SDL/include

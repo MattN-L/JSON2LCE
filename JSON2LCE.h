@@ -6,4 +6,6 @@
 #include <iostream>
 #include "Converter.h"
 
-// TODO: Reference additional headers your program requires here.
+//basically embedded resources for font and icon because it seems annoying to keep track of two files with cmake
+#include "AppIcon.h" // a custom icon I made using bedrock and mossy cobblestone textures from Minecraft. Property of Mojang Studios/Microsoft
+#include "AppFont.h" // the Lato font, which is under the Open Font License

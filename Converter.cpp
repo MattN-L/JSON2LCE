@@ -291,7 +291,7 @@ bool JSON2CSM(SDL_Window& window, const std::string& inpath)
     catch (const std::exception& e) {
         // handle standard exceptions
         std::cerr << "Exception: " << e.what() << std::endl;
-        //MessageBox(hWnd, L"Something went wrong. Please ensure that the model is a valid Bedrock Entity model JSON.", L"Error. Operation Aborted.", MB_ICONERROR);
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error. Operation Aborted.", "Something went wrong. Please ensure that the model is a valid Bedrock Entity model JSON.", &window);
         return false;
     }
 

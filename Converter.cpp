@@ -213,11 +213,11 @@ bool JSON2CSM(SDL_Window& window, const std::string& inpath)
                             bool isMirrored = cube.contains("mirror") && cube["mirror"].get<bool>();
                             float scale = cube.contains("inflate") ? cube["inflate"].get<float>() : 0.0f;
 
-                            float PosX = origin[0] + posXOffset;
-                            float PosY = -1 * (origin[1] - posYOffset + size[1]);
-                            float PosZ = origin[2] + posZOffset;
+                            float PosX = origin[0].get<float>() + posXOffset;
+                            float PosY = -1 * (origin[1].get<float>() - posYOffset + size[1].get<float>());
+                            float PosZ = origin[2].get<float>() + posZOffset;
 
-                            *fileData << "BOX " << finalBoneName << " " << PosX << " " << PosY << " " << PosZ << " " << size[0] << " " << size[1] << " " << size[2] << " " << uv[0] << " " << uv[1] << " " << isHelmet << " " << isMirrored << " " << scale << "\n";
+                            *fileData << "BOX " << finalBoneName << " " << PosX << " " << PosY << " " << PosZ << " " << size[0].get<float>() << " " << size[1].get<float>() << " " << size[2].get<float>() << " " << uv[0] << " " << uv[1] << " " << isHelmet << " " << isMirrored << " " << scale << "\n";
 
                             std::cout << "  Cube Origin: [" << PosX << ", " << PosY << ", " << PosZ << "]\n";
                             std::cout << "  Cube Size: [" << size[0] << ", " << size[1] << ", " << size[2] << "]\n";
@@ -267,11 +267,11 @@ bool JSON2CSM(SDL_Window& window, const std::string& inpath)
                                 bool isMirrored = cube.contains("mirror") && cube["mirror"].get<bool>();
                                 float scale = cube.contains("inflate") ? cube["inflate"].get<float>() : 0.0f;
 
-                                float PosX = origin[0] + posXOffset;
-                                float PosY = -1 * (origin[1] - posYOffset + size[1]);
-                                float PosZ = origin[2] + posZOffset;
+                                float PosX = origin[0].get<float>() + posXOffset;
+                                float PosY = -1 * (origin[1].get<float>() - posYOffset + size[1].get<float>());
+                                float PosZ = origin[2].get<float>() + posZOffset;
 
-                                *fileData << "BOX " << finalBoneName << " " << PosX << " " << PosY << " " << PosZ << " " << size[0] << " " << size[1] << " " << size[2] << " " << uv[0] << " " << uv[1] << " " << isHelmet << " " << isMirrored << " " << scale << "\n";
+                                *fileData << "BOX " << finalBoneName << " " << PosX << " " << PosY << " " << PosZ << " " << size[0].get<float>() << " " << size[1].get<float>() << " " << size[2].get<float>() << " " << uv[0] << " " << uv[1] << " " << isHelmet << " " << isMirrored << " " << scale << "\n";
 
                                 std::cout << "  Cube Origin: [" << PosX << ", " << PosY << ", " << PosZ << "]\n";
                                 std::cout << "  Cube Size: [" << size[0] << ", " << size[1] << ", " << size[2] << "]\n";
